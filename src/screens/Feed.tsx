@@ -1,6 +1,6 @@
 import React from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Bell, Search, UserRoundPlus } from "lucide-react";
+import { Bell, Dices, Receipt, Search, UserRoundPlus } from "lucide-react";
 import { useApp } from "../store";
 import { useNav, openEvent, openPerson } from "../nav";
 import { ME, USERS } from "../data";
@@ -21,6 +21,7 @@ export function FeedScreen() {
   const following = useApp((s) => s.following);
   const notifs = useApp((s) => s.notifs);
   const push = useNav((s) => s.push);
+  const openSheet = useNav((s) => s.openSheet);
   const [page, setPage] = React.useState<0 | 1>(0);
   const [filter, setFilter] = React.useState<Filter>("all");
   const unread = notifs.filter((n) => !n.read).length;
@@ -52,6 +53,12 @@ export function FeedScreen() {
       !e.exitPoll[ME]
   );
 
+  // most recent night you were at — its morning-after receipt is ready
+  const lastNight = events
+    .filter((e) => e.end < Date.now() && e.going.includes(ME) && Date.now() - e.end < 3 * DAY)
+    .sort((a, b) => b.end - a.end)[0];
+  const showDrop = !!lastNight && (!ratePrompt || ratePrompt.id !== lastNight.id);
+
   const suggestions = USERS.filter((u) => u.id !== ME && !following.includes(u.id)).sort(
     (a, b) => b.mutuals - a.mutuals
   );
@@ -73,6 +80,9 @@ export function FeedScreen() {
             </span>
           </h1>
           <div className="flex items-center gap-2">
+            <IconBtn onClick={() => openSheet({ kind: "roulette" })}>
+              <Dices size={18} strokeWidth={2.2} />
+            </IconBtn>
             <IconBtn onClick={() => push({ kind: "search" })}>
               <Search size={18} strokeWidth={2.2} />
             </IconBtn>
@@ -155,6 +165,7 @@ export function FeedScreen() {
         >
           <FeedColumn>
             {ratePrompt && <RateLastNight event={ratePrompt} />}
+            {showDrop && <MorningAfterDrop event={lastNight!} />}
             {circle.length === 0 && <EmptyFeed label="Nothing here yet — create something." />}
             {circle.map((e) => (
               <EventCard key={e.id} event={e} />
@@ -230,6 +241,33 @@ function RateLastNight({ event }: { event: EventT }) {
         </motion.div>
       )}
     </AnimatePresence>
+  );
+}
+
+/* ── morning-after receipt drop ── */
+function MorningAfterDrop({ event }: { event: EventT }) {
+  const openSheet = useNav((s) => s.openSheet);
+  return (
+    <motion.button
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      onClick={() => openSheet({ kind: "nightReceipt", eventId: event.id })}
+      className="press relative w-full overflow-hidden rounded-3xl p-4 text-left hairline"
+      style={{
+        background:
+          "linear-gradient(120deg, rgba(255,198,92,0.16), rgba(255,106,140,0.10)), rgb(var(--c-raise))",
+      }}
+    >
+      <div className="mb-1 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-gold">
+        <Receipt size={13} /> Morning after
+      </div>
+      <div className="font-display text-[16px] font-semibold leading-tight">
+        Your receipt from {event.title} is ready
+      </div>
+      <div className="mt-1 text-[12.5px] text-faint">
+        How the night actually went — built to screenshot.
+      </div>
+    </motion.button>
   );
 }
 

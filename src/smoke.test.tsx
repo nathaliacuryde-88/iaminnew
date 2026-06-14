@@ -86,6 +86,16 @@ describe("I am (IN) smoke", () => {
     // create sheet opens
     act(() => useNav.getState().openSheet({ kind: "create" }));
     expect((await screen.findAllByText("Drop screenshots")).length).toBeGreaterThan(0);
+
+    // decision roulette spins
+    act(() => useNav.getState().openSheet({ kind: "roulette" }));
+    expect((await screen.findAllByText(/who's free/i)).length).toBeGreaterThan(0);
+    act(() => useNav.getState().closeSheet());
+
+    // morning-after receipt renders from a past night
+    act(() => useNav.getState().openSheet({ kind: "nightReceipt", eventId: "greeklish" }));
+    expect((await screen.findAllByText(/MORNING-AFTER RECEIPT/)).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText(/THE VERDICT/)).length).toBeGreaterThan(0);
   });
 
   it("store actions: rsvp, expense, pact, poll, block day", () => {

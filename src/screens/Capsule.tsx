@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { ImagePlus, Lock, Sparkles } from "lucide-react";
+import { ImagePlus, Lock, Receipt, Sparkles } from "lucide-react";
 import { useApp, userById } from "../store";
 import { useNav } from "../nav";
 import { ME } from "../data";
@@ -123,6 +123,7 @@ export function CapsuleDetailScreen({ id }: { id: string }) {
   const lang = useApp((s) => s.lang);
   const addPhotos = useApp((s) => s.addPhotos);
   const toast = useNav((s) => s.toast);
+  const openSheet = useNav((s) => s.openSheet);
   const fileRef = React.useRef<HTMLInputElement>(null);
   const [zoom, setZoom] = React.useState<CapsulePhoto | null>(null);
 
@@ -160,6 +161,13 @@ export function CapsuleDetailScreen({ id }: { id: string }) {
           </div>
           <Facepile users={going} size={24} max={3} />
         </div>
+
+        {/* morning-after receipt */}
+        {ended && (
+          <Btn variant="soft" className="w-full" onClick={() => openSheet({ kind: "nightReceipt", eventId: event.id })}>
+            <Receipt size={16} /> {lang === "de" ? "Quittung vom Morgen danach" : "Morning-after receipt"}
+          </Btn>
+        )}
 
         {/* predictions */}
         {event.predictions.length > 0 && (

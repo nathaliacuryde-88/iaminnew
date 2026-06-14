@@ -22,7 +22,9 @@ export type SheetT =
   | { kind: "receipt"; userId: string }
   | { kind: "card"; userId: string }
   | { kind: "radarStatus"; eventId: string }
-  | { kind: "dayDetail"; dateKey: string };
+  | { kind: "dayDetail"; dateKey: string }
+  | { kind: "nightReceipt"; eventId: string }
+  | { kind: "roulette" };
 
 interface NavState {
   tab: Tab;
