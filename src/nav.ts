@@ -11,6 +11,7 @@ export type Screen =
   | { kind: "notifications" }
   | { kind: "search" }
   | { kind: "people" }
+  | { kind: "venueDashboard" }
   | { kind: "settings" };
 
 export type SheetT =
@@ -24,7 +25,8 @@ export type SheetT =
   | { kind: "radarStatus"; eventId: string }
   | { kind: "dayDetail"; dateKey: string }
   | { kind: "nightReceipt"; eventId: string }
-  | { kind: "roulette" };
+  | { kind: "roulette" }
+  | { kind: "convertMaybes"; eventId: string };
 
 interface NavState {
   tab: Tab;

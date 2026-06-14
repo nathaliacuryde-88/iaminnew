@@ -163,6 +163,11 @@ export const seedEvents = (): EventT[] => [
     going: ["me", "reduque"],
     maybe: ["felice", "erick"],
     invited: ["felice", "erick", "reduque", "pippo"],
+    pacts: [
+      { id: "fp1", between: ["pippo", "joan"], status: "pending" },
+      { id: "fp2", between: ["mare", "matti"], status: "pending" },
+      { id: "fp3", between: ["bernd", "plmnt"], status: "pending" },
+    ],
     weather: { icon: "⛅", temp: 21, label: "Partly cloudy" },
     sourceType: "screenshot",
   }),

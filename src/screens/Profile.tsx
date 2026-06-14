@@ -190,6 +190,7 @@ export function ProfileScreen() {
 /* ════════ DNA ════════ */
 function DnaPanel({ events, organizer }: { events: EventT[]; organizer: boolean }) {
   const lang = useApp((s) => s.lang);
+  const push = useNav((s) => s.push);
   const created = events.filter((e) => e.createdBy === ME);
   const past = events.filter((e) => e.end < Date.now());
 
@@ -236,6 +237,21 @@ function DnaPanel({ events, organizer }: { events: EventT[]; organizer: boolean 
           ]}
         />
         <CompetitorCard />
+        <button
+          onClick={() => push({ kind: "venueDashboard" })}
+          className="press w-full rounded-3xl p-4 text-left hairline flex items-center gap-3"
+          style={{
+            background:
+              "linear-gradient(135deg, rgba(138,108,255,0.18), rgba(62,230,160,0.08)), rgb(var(--c-raise))",
+          }}
+        >
+          <div className="w-10 h-10 rounded-2xl bg-accent/15 flex items-center justify-center text-xl shrink-0">📊</div>
+          <div className="flex-1 min-w-0">
+            <div className="font-display font-semibold text-[15px]">Open venue dashboard</div>
+            <div className="text-[12.5px] text-dim">Super-hosts, lapsing regulars, crowd DNA & co-visitation</div>
+          </div>
+          <span className="text-accent text-xl">→</span>
+        </button>
       </div>
     );
   }

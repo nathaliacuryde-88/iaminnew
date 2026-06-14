@@ -16,6 +16,7 @@ import { SearchScreen } from "./screens/Search";
 import { NotificationsScreen } from "./screens/Notifications";
 import { SettingsScreen } from "./screens/Settings";
 import { PeopleScreen } from "./screens/People";
+import { VenueDashboardScreen } from "./screens/VenueDashboard";
 import { CreateSheet } from "./screens/Create";
 import { SheetHost } from "./sheets/SheetHost";
 
@@ -77,6 +78,8 @@ export default function App() {
                     return <SettingsScreen key={s.key} />;
                   case "people":
                     return <PeopleScreen key={s.key} />;
+                  case "venueDashboard":
+                    return <VenueDashboardScreen key={s.key} />;
                   default:
                     return null;
                 }

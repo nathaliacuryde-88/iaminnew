@@ -96,6 +96,23 @@ describe("I am (IN) smoke", () => {
     act(() => useNav.getState().openSheet({ kind: "nightReceipt", eventId: "greeklish" }));
     expect((await screen.findAllByText(/MORNING-AFTER RECEIPT/)).length).toBeGreaterThan(0);
     expect((await screen.findAllByText(/THE VERDICT/)).length).toBeGreaterThan(0);
+    act(() => useNav.getState().closeSheet());
+
+    // organizer tools: projected fill + convert maybes + venue dashboard
+    act(() => useApp.getState().setMode("organizer"));
+    act(() => useNav.getState().popAll());
+    act(() => useNav.getState().push({ kind: "event", id: "flohmarkt" }));
+    expect((await screen.findAllByText(/Projected fill/i)).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText(/one friend away/i)).length).toBeGreaterThan(0);
+
+    act(() => useNav.getState().openSheet({ kind: "convertMaybes", eventId: "flohmarkt" }));
+    expect((await screen.findAllByText(/on the fence/i)).length).toBeGreaterThan(0);
+    act(() => useNav.getState().closeSheet());
+
+    act(() => useNav.getState().popAll());
+    act(() => useNav.getState().push({ kind: "venueDashboard" }));
+    expect((await screen.findAllByText(/super-hosts/i)).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText(/Crowd DNA/i)).length).toBeGreaterThan(0);
   });
 
   it("store actions: rsvp, expense, pact, poll, block day", () => {
@@ -110,7 +127,7 @@ describe("I am (IN) smoke", () => {
     const pactId = s.proposePact("flohmarkt", "erick");
     s.sealPact("flohmarkt", pactId);
     const ev2 = useApp.getState().events.find((e) => e.id === "flohmarkt")!;
-    expect(ev2.pacts[0].status).toBe("sealed");
+    expect(ev2.pacts.find((p) => p.id === pactId)!.status).toBe("sealed");
     expect(ev2.going).toContain("erick");
 
     s.votePoll("greeklish", "fire");

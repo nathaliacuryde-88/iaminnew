@@ -10,6 +10,7 @@ import {
   Flame,
   HandHeart,
   Handshake,
+  Link2,
   Lock,
   MapPin,
   MessageCircle,
@@ -20,15 +21,17 @@ import {
   Send,
   Share2,
   Ticket,
+  TrendingUp,
   Users,
   Wallet,
+  Zap,
 } from "lucide-react";
 import type { EventT, LineLevel, PollVote } from "../types";
 import { ME, USERS } from "../data";
 import { useApp, userById } from "../store";
 import { useNav, openPerson } from "../nav";
 import { t } from "../i18n";
-import { cx, countdown, eur, fmtFull, fmtTime, haptic, HOUR, relDay, VIBES, downloadIcs } from "../util";
+import { clamp, cx, countdown, eur, fmtFull, fmtTime, haptic, HOUR, relDay, VIBES, downloadIcs } from "../util";
 import { StackScreen, IconBtn } from "../components/StackScreen";
 import { Cover } from "../components/Cover";
 import { Avatar, Facepile } from "../components/Avatar";
@@ -952,11 +955,74 @@ function CapsuleLinkCard({ event }: { event: EventT }) {
 
 /* ── organizer analytics ── */
 function OrganizerModule({ event }: { event: EventT }) {
-  const { toast } = useNav();
+  const { toast, openSheet } = useNav();
   const duplicateEvent = useApp((s) => s.duplicateEvent);
+  const past = Date.now() > event.end;
+
   const conversion = event.views ? Math.round(((event.going.length + event.maybe.length) / event.views) * 100) : 0;
+
+  // ── Projected Fill: confirmed + conditional pacts + maybes, with a band ──
+  const confirmed = event.going.length;
+  const mb = event.maybe.length;
+  const pactPeople = new Set<string>();
+  event.pacts
+    .filter((p) => p.status === "pending")
+    .forEach((p) => p.between.forEach((u) => {
+      if (!event.going.includes(u) && !event.maybe.includes(u)) pactPeople.add(u);
+    }));
+  const pactPending = pactPeople.size;
+
+  const expMaybe = Math.round(mb * 0.4); // ~40% of maybes historically show
+  const expPact = Math.round(pactPending * 0.7); // pacts seal often
+  const projected = confirmed + expMaybe + expPact;
+  const low = confirmed + Math.round(pactPending * 0.35) + Math.round(mb * 0.2);
+  const high = confirmed + pactPending + Math.round(mb * 0.6);
+  const conf = clamp(Math.round(((confirmed + expPact) / Math.max(projected, 1)) * 100), 40, 96);
+  const denom = Math.max(confirmed + pactPending + mb, 1); // bar = composition of the pool
+
   return (
     <Section icon={<Eye size={16} className="text-accent" />} title="Organizer tools">
+      {!past && (
+        <div className="rounded-2xl bg-card hairline p-3.5 mb-3">
+          <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-faint mb-2">
+            <TrendingUp size={13} className="text-mint" /> Projected fill
+          </div>
+          <div className="flex items-end gap-2">
+            <span className="font-display font-bold text-[34px] leading-none tracking-tight">~{projected}</span>
+            <span className="text-[12.5px] text-faint mb-1">
+              expected · {low}–{high} range · {conf}% confidence
+            </span>
+          </div>
+
+          {/* stacked forecast bar */}
+          <div className="mt-3 h-3 rounded-full bg-bg/60 overflow-hidden flex">
+            <div className="h-full bg-mint" style={{ width: `${(confirmed / denom) * 100}%` }} />
+            <div className="h-full bg-accent" style={{ width: `${(pactPending / denom) * 100}%` }} />
+            <div className="h-full bg-gold/60" style={{ width: `${(mb / denom) * 100}%` }} />
+          </div>
+          <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-[11px] text-faint">
+            <Legend color="bg-mint" label={`${confirmed} confirmed`} />
+            <Legend color="bg-accent" label={`${pactPending} pact-pending`} />
+            <Legend color="bg-gold/60" label={`${mb} maybe`} />
+          </div>
+
+          {pactPending > 0 && (
+            <div className="mt-3 flex items-start gap-2 rounded-xl bg-accent/12 p-2.5 text-[12.5px] text-dim">
+              <Link2 size={15} className="text-accent shrink-0 mt-0.5" />
+              <span>
+                <b className="text-ink">{pactPending} {pactPending === 1 ? "person is" : "people are"} one friend away</b> — they've pacted "I'll go if you go." Nudge the pair and they both lock in.
+              </span>
+            </div>
+          )}
+
+          {mb > 0 && (
+            <Btn variant="soft" className="w-full mt-3" onClick={() => openSheet({ kind: "convertMaybes", eventId: event.id })}>
+              <Zap size={15} className="text-gold" /> Convert the {mb} {mb === 1 ? "maybe" : "maybes"}
+            </Btn>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-3 gap-2 mb-3">
         {[
           [event.views ?? 0, "views"],
@@ -979,6 +1045,14 @@ function OrganizerModule({ event }: { event: EventT }) {
         <Copy size={15} /> Duplicate this event
       </Btn>
     </Section>
+  );
+}
+
+function Legend({ color, label }: { color: string; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className={cx("w-2 h-2 rounded-full", color)} /> {label}
+    </span>
   );
 }
 
