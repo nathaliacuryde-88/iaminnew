@@ -1,4 +1,4 @@
-import type { EventT, Notif, User } from "./types";
+import type { EventT, Notif, Spark, User } from "./types";
 import { at, HOUR, MIN } from "./util";
 
 export const ME = "me";
@@ -579,6 +579,30 @@ export const seedNotifs = (): Notif[] => [
   { id: "n8", kind: "tab", text: "Erick paid you back 5,00 € on Greeklish Day", ts: at(-3, 15), read: true, eventId: "greeklish", userId: "erick" },
   { id: "n9", kind: "follow", text: "Re Duque started following you", ts: at(-4, 12), read: true, userId: "reduque" },
   { id: "n10", kind: "reminder", text: "Reminded you about 9,80 € open on Greeklish Day", ts: at(-5, 10), read: true, eventId: "greeklish" },
+];
+
+/* "Across the room" — seeded missed connections on a past public venue night */
+export const seedSparks = (): Spark[] => [
+  {
+    id: "sp1",
+    eventId: "kellernacht5",
+    by: "felice",
+    text: "Green corduroy jacket, silver rings — you requested the track that turned the whole basement around, we danced one song and then the crowd swallowed you.",
+    where: "by the back speaker, ~1am",
+    selfHint: "I was the one in the leopard top near the decks.",
+    ts: at(-11, 12),
+    status: "open",
+  },
+  {
+    id: "sp2",
+    eventId: "kellernacht5",
+    by: "mare",
+    text: "You lent me your lighter on the balcony and we talked about Tbilisi for ten minutes before I lost you inside.",
+    where: "smoking balcony, late",
+    selfHint: "Blue buzzcut, long red coat.",
+    ts: at(-11, 13),
+    status: "open",
+  },
 ];
 
 /* templates used by the AI screenshot / URL ingest simulation */

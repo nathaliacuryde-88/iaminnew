@@ -31,7 +31,8 @@ export type SheetT =
   | { kind: "dayDetail"; dateKey: string }
   | { kind: "nightReceipt"; eventId: string }
   | { kind: "roulette" }
-  | { kind: "convertMaybes"; eventId: string };
+  | { kind: "convertMaybes"; eventId: string }
+  | { kind: "spark"; eventId: string };
 
 interface NavState {
   tab: Tab;

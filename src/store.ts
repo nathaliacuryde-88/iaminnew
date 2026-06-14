@@ -10,9 +10,10 @@ import type {
   RadarStatus,
   Rsvp,
   LineLevel,
+  Spark,
 } from "./types";
 import type { Lang } from "./i18n";
-import { DEFAULT_FOLLOWING, ME, USERS, seedEvents, seedNotifs } from "./data";
+import { DEFAULT_FOLLOWING, ME, USERS, seedEvents, seedNotifs, seedSparks } from "./data";
 import { uid } from "./util";
 
 export interface MeProfile {
@@ -40,6 +41,7 @@ interface AppState {
   followers: string[];
   events: EventT[];
   notifs: Notif[];
+  sparks: Spark[];
   blockedDays: string[];
   cardsSent: string[];
   seededAt: number;
@@ -68,6 +70,9 @@ interface AppState {
   updateEvent: (eventId: string, patch: Partial<EventT>) => void;
   duplicateEvent: (eventId: string) => string;
   toggleBlockedDay: (key: string) => void;
+  postSpark: (eventId: string, text: string, where: string, selfHint: string) => string;
+  claimSpark: (sparkId: string, who?: string) => void;
+  respondSpark: (sparkId: string, connect: boolean) => void;
   addNotif: (n: Omit<Notif, "id" | "ts" | "read">) => void;
   markNotifsRead: () => void;
   sendCard: (userId: string) => void;
@@ -105,6 +110,7 @@ export const useApp = create<AppState>()(
       followers: ["felice", "erick", "pippo", "reduque", "pato"],
       events: seedEvents(),
       notifs: seedNotifs(),
+      sparks: seedSparks(),
       blockedDays: [],
       cardsSent: [],
       seededAt: Date.now(),
@@ -270,6 +276,36 @@ export const useApp = create<AppState>()(
             : [...s.blockedDays, key],
         })),
 
+      postSpark: (eventId, text, where, selfHint) => {
+        const id = uid();
+        set((s) => ({
+          sparks: [
+            { id, eventId, by: ME, text, where: where || undefined, selfHint, ts: Date.now(), status: "open" as const },
+            ...s.sparks,
+          ],
+        }));
+        return id;
+      },
+
+      claimSpark: (sparkId, who = ME) =>
+        set((s) => ({
+          sparks: s.sparks.map((sp) =>
+            sp.id === sparkId ? { ...sp, claimedBy: who, status: "claimed" as const } : sp
+          ),
+        })),
+
+      respondSpark: (sparkId, connect) =>
+        set((s) => {
+          const sp = s.sparks.find((x) => x.id === sparkId);
+          const sparks = s.sparks.map((x) =>
+            x.id === sparkId ? { ...x, status: (connect ? "matched" : "passed") as Spark["status"] } : x
+          );
+          if (!connect || !sp) return { sparks };
+          // on a match both auto-follow each other
+          const add = [sp.by, sp.claimedBy].filter((u): u is string => !!u && u !== ME);
+          return { sparks, following: [...new Set([...s.following, ...add])] };
+        }),
+
       addNotif: (nf) =>
         set((s) => ({
           notifs: [{ ...nf, id: uid(), ts: Date.now(), read: false }, ...s.notifs],
@@ -281,7 +317,7 @@ export const useApp = create<AppState>()(
       sendCard: (userId) => set((s) => ({ cardsSent: [...s.cardsSent, userId] })),
 
       /* refresh demo timeline so there is always a live event "today" */
-      reseed: () => set({ events: seedEvents(), notifs: seedNotifs(), seededAt: Date.now() }),
+      reseed: () => set({ events: seedEvents(), notifs: seedNotifs(), sparks: seedSparks(), seededAt: Date.now() }),
 
       resetAll: () => {
         localStorage.removeItem("iamin-store");
@@ -290,14 +326,15 @@ export const useApp = create<AppState>()(
     }),
     {
       name: "iamin-store",
-      version: 4,
-      // v4: organizer revamp — refresh demo events & seed the venue identity,
-      // but keep the user signed in.
+      version: 5,
+      // v4: organizer revamp · v5: sparks — refresh demo content & seed the
+      // venue identity, but keep the user signed in.
       migrate: (persisted: unknown) => {
         const s = persisted as Partial<AppState> | undefined;
         if (!s) return persisted as AppState;
         s.events = seedEvents();
         s.notifs = seedNotifs();
+        s.sparks = seedSparks();
         s.seededAt = Date.now();
         s.me = {
           ...emptyMe,

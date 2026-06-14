@@ -17,6 +17,7 @@ const ICONS: Record<Notif["kind"], string> = {
   birthday: "🎂",
   line: "🚪",
   reminder: "⏰",
+  spark: "✨",
 };
 
 export function NotificationsScreen() {
@@ -37,7 +38,8 @@ export function NotificationsScreen() {
     <button
       key={n.id}
       onClick={() => {
-        if (n.eventId) push({ kind: "event", id: n.eventId });
+        if (n.kind === "spark" && n.eventId) push({ kind: "capsule", id: n.eventId });
+        else if (n.eventId) push({ kind: "event", id: n.eventId });
         else if (n.userId) push({ kind: "person", id: n.userId });
       }}
       className="press w-full flex items-start gap-3 px-4 py-3.5 text-left"

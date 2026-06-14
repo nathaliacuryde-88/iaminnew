@@ -12,6 +12,7 @@ import { AgendaRow, BirthdayRow } from "../screens/Calendar";
 import { NightReceiptSheet } from "./NightReceipt";
 import { RouletteSheet } from "./Roulette";
 import { ConvertMaybesSheet } from "./ConvertMaybes";
+import { SparkSheet } from "./Spark";
 
 export function SheetHost() {
   const sheet = useNav((s) => s.sheet);
@@ -40,6 +41,7 @@ function titleFor(s: SheetT): string {
     case "nightReceipt": return "Morning-after receipt";
     case "roulette": return "Can't decide? 🎲";
     case "convertMaybes": return "Convert the maybes ⚡";
+    case "spark": return "Across the room ✨";
     case "dayDetail": return new Date(s.dateKey + "T12:00").toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
     default: return "";
   }
@@ -57,6 +59,7 @@ function SheetContent({ sheet }: { sheet: SheetT }) {
     case "nightReceipt": return <NightReceiptSheet eventId={sheet.eventId} />;
     case "roulette": return <RouletteSheet />;
     case "convertMaybes": return <ConvertMaybesSheet eventId={sheet.eventId} />;
+    case "spark": return <SparkSheet eventId={sheet.eventId} />;
     case "dayDetail": return <DayDetailSheet dateKey={sheet.dateKey} />;
     default: return null;
   }

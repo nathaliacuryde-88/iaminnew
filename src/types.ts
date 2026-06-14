@@ -78,6 +78,19 @@ export interface Pact {
   status: "pending" | "sealed";
 }
 
+/** "Across the room" missed connection, tied to one public event night. */
+export interface Spark {
+  id: string;
+  eventId: string;
+  by: string; // poster — hidden until matched
+  text: string; // what caught your eye (guided)
+  where?: string; // spot / time hint
+  selfHint: string; // how they'll recognize the poster
+  ts: number;
+  claimedBy?: string; // who said "that's me" — hidden until matched
+  status: "open" | "claimed" | "matched" | "passed";
+}
+
 export interface Weather {
   icon: string;
   temp: number;
@@ -131,7 +144,8 @@ export type NotifKind =
   | "capsule"
   | "birthday"
   | "line"
-  | "reminder";
+  | "reminder"
+  | "spark";
 
 export interface Notif {
   id: string;

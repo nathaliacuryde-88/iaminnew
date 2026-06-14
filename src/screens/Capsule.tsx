@@ -1,12 +1,12 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { ImagePlus, Lock, Receipt, Sparkles } from "lucide-react";
+import { Flag, ImagePlus, Lock, Receipt, Sparkles } from "lucide-react";
 import { useApp, userById } from "../store";
 import { useNav } from "../nav";
 import { ME } from "../data";
 import { t } from "../i18n";
-import { countdown, cx, fmtDay, uid } from "../util";
-import type { CapsulePhoto, EventT } from "../types";
+import { ago, countdown, cx, fmtDay, uid } from "../util";
+import type { CapsulePhoto, EventT, Spark, User } from "../types";
 import { PhotoTile, Cover, CoverThumb } from "../components/Cover";
 import { Avatar, Facepile } from "../components/Avatar";
 import { StackScreen } from "../components/StackScreen";
@@ -169,6 +169,9 @@ export function CapsuleDetailScreen({ id }: { id: string }) {
           </Btn>
         )}
 
+        {/* sparks — across the room (public venue nights) */}
+        {event.privacy === "public" && <SparksSection event={event} />}
+
         {/* predictions */}
         {event.predictions.length > 0 && (
           <Section
@@ -293,5 +296,173 @@ export function CapsuleDetailScreen({ id }: { id: string }) {
         </motion.button>
       )}
     </StackScreen>
+  );
+}
+
+/* ════════ Sparks — "across the room" missed connections ════════ */
+const SPARK_BG = "linear-gradient(135deg, rgba(138,108,255,0.16), rgba(255,106,194,0.10)), rgb(var(--c-raise))";
+
+function SparksSection({ event }: { event: EventT }) {
+  const lang = useApp((s) => s.lang);
+  const allSparks = useApp((s) => s.sparks);
+  const sparks = allSparks.filter((sp) => sp.eventId === event.id && sp.status !== "passed");
+  const openSheet = useNav((s) => s.openSheet);
+
+  return (
+    <Section
+      icon={<span className="text-base">✨</span>}
+      title={lang === "de" ? "Quer durch den Raum" : "Across the room"}
+      aside={sparks.length > 0 ? <span className="text-[12px] text-faint">{sparks.length}</span> : undefined}
+    >
+      <p className="text-[12.5px] text-dim mb-3">
+        {lang === "de"
+          ? "Jemanden gesehen, aber verpasst? Poste es — nur Leute von diesem Abend sehen es. Anonym, bis ihr beide Ja sagt."
+          : "See someone you didn't get to talk to? Post it — only people who were here see it. Anonymous until you both say yes."}
+      </p>
+      <div className="space-y-2">
+        {sparks.map((sp) => (
+          <SparkCard key={sp.id} spark={sp} eventTitle={event.title} />
+        ))}
+      </div>
+      <Btn variant="soft" className="w-full mt-3" onClick={() => openSheet({ kind: "spark", eventId: event.id })}>
+        <Sparkles size={15} className="text-accent" /> {lang === "de" ? "Spark posten" : "Post a spark"}
+      </Btn>
+    </Section>
+  );
+}
+
+function SparkCard({ spark, eventTitle }: { spark: Spark; eventTitle: string }) {
+  const lang = useApp((s) => s.lang);
+  const claimSpark = useApp((s) => s.claimSpark);
+  const respondSpark = useApp((s) => s.respondSpark);
+  const addNotif = useApp((s) => s.addNotif);
+  const toast = useNav((s) => s.toast);
+
+  const mine = spark.by === ME;
+  const claimedByMe = spark.claimedBy === ME;
+
+  if (spark.status === "matched") {
+    const other = userById(spark.by === ME ? spark.claimedBy! : spark.by);
+    return <MatchReveal other={other} spark={spark} />;
+  }
+
+  // poster sees a claim → connect or not
+  if (mine && spark.status === "claimed") {
+    return (
+      <div className="rounded-2xl hairline p-3.5" style={{ background: SPARK_BG }}>
+        <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-accent mb-1">Your spark · someone bit 👀</div>
+        <p className="text-[13.5px] leading-snug">“{spark.text}”</p>
+        <div className="text-[12px] text-faint mt-2">An attendee thinks that's them. Want to connect?</div>
+        <div className="flex gap-2 mt-2.5">
+          <Btn size="sm" variant="soft" className="flex-1" onClick={() => { respondSpark(spark.id, false); toast("🫧", "No worries", "They're never told."); }}>
+            Not this time
+          </Btn>
+          <Btn
+            size="sm"
+            className="flex-1"
+            onClick={() => {
+              respondSpark(spark.id, true);
+              const u = userById(spark.claimedBy!);
+              toast("✨", "It's a spark!", `You and ${u?.name} are connected`);
+              addNotif({ kind: "spark", text: `You and ${u?.name} connected from ${eventTitle} ✨`, userId: spark.claimedBy });
+            }}
+          >
+            Connect ✨
+          </Btn>
+        </div>
+      </div>
+    );
+  }
+
+  // I claimed someone's spark, waiting for them
+  if (claimedByMe && spark.status === "claimed") {
+    return (
+      <div className="rounded-2xl bg-card/60 hairline p-3.5">
+        <p className="text-[13.5px] leading-snug text-dim">“{spark.text}”</p>
+        <div className="text-[12px] text-faint mt-2">⏳ You said this might be you — waiting for them to say yes…</div>
+      </div>
+    );
+  }
+
+  // my own spark, still live
+  if (mine) {
+    return (
+      <div className="rounded-2xl bg-card hairline p-3.5">
+        <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-faint mb-1">Your spark · live</div>
+        <p className="text-[13.5px] leading-snug">“{spark.text}”</p>
+        {spark.where && <div className="text-[11.5px] text-faint mt-1">📍 {spark.where}</div>}
+        <div className="text-[11.5px] text-faint mt-2">You'll show as: {spark.selfHint}</div>
+      </div>
+    );
+  }
+
+  // someone else's open spark → claim or report
+  return (
+    <div className="rounded-2xl bg-card hairline p-3.5">
+      <p className="text-[13.5px] leading-snug">“{spark.text}”</p>
+      <div className="text-[11.5px] text-faint mt-1.5">
+        {spark.where && <>📍 {spark.where} · </>}🕯️ anonymous · {ago(spark.ts, lang)}
+      </div>
+      <div className="text-[11.5px] text-faint mt-1">
+        They'll know you by: <span className="text-dim">{spark.selfHint}</span>
+      </div>
+      <div className="flex gap-2 mt-2.5">
+        <Btn
+          size="sm"
+          variant="soft"
+          className="flex-1"
+          onClick={() => {
+            claimSpark(spark.id);
+            toast("👀", "Sent anonymously", "If they say yes, you both reveal");
+            setTimeout(() => {
+              respondSpark(spark.id, true);
+              const u = userById(spark.by);
+              toast("✨", "It's a spark!", `You and ${u?.name} matched`);
+              addNotif({ kind: "spark", text: `You matched with ${u?.name} from ${eventTitle} ✨`, userId: spark.by });
+            }, 4500);
+          }}
+        >
+          👀 This might be me
+        </Btn>
+        <button
+          onClick={() => toast("🛡️", "Reported", "Thanks — we'll take a look")}
+          className="press w-9 h-9 rounded-full bg-card hairline flex items-center justify-center text-faint shrink-0"
+          aria-label="Report"
+        >
+          <Flag size={14} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function MatchReveal({ other, spark }: { other?: User; spark: Spark }) {
+  const toast = useNav((s) => s.toast);
+  const opener = spark.where ? `${spark.where} — finally 👋` : "okay, that was a sign 👋";
+  return (
+    <motion.div
+      initial={{ opacity: 0, rotateX: 90 }}
+      animate={{ opacity: 1, rotateX: 0 }}
+      transition={{ type: "spring", stiffness: 200, damping: 20 }}
+      className="rounded-2xl hairline p-4 text-center"
+      style={{ background: SPARK_BG }}
+    >
+      <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-accent">✨ It's a spark</div>
+      <div className="flex items-center justify-center gap-3 my-3">
+        <Avatar user={userById(ME)} size={46} />
+        <span className="text-xl">✨</span>
+        <Avatar user={other} size={46} />
+      </div>
+      <div className="font-display font-bold text-[16px]">You &amp; {other?.name}</div>
+      <div className="text-[11.5px] text-faint mt-0.5">
+        You're now following each other{other && other.mutuals > 0 ? ` · ${other.mutuals} mutual friends` : ""}
+      </div>
+      <div className="mt-3 rounded-xl bg-card/70 hairline p-2.5 text-[12.5px] text-dim">
+        Opener: “{opener}”
+      </div>
+      <Btn size="sm" className="mt-3" onClick={() => toast("👋", "Wave sent", other?.name)}>
+        Wave 👋
+      </Btn>
+    </motion.div>
   );
 }

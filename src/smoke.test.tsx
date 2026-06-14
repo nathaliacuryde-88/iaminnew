@@ -65,6 +65,15 @@ describe("I am (IN) smoke", () => {
     expect((await screen.findAllByText(/Revealed/)).length).toBeGreaterThan(0);
     act(() => useNav.getState().popAll());
 
+    // sparks ("across the room") on a public venue night
+    act(() => useNav.getState().push({ kind: "capsule", id: "kellernacht5" }));
+    expect((await screen.findAllByText(/Across the room/i)).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText(/silver rings/i)).length).toBeGreaterThan(0);
+    act(() => useNav.getState().openSheet({ kind: "spark", eventId: "kellernacht5" }));
+    expect((await screen.findAllByText(/What caught your eye/i)).length).toBeGreaterThan(0);
+    act(() => useNav.getState().closeSheet());
+    act(() => useNav.getState().popAll());
+
     // person + receipt data exists
     act(() => useNav.getState().push({ kind: "person", id: "felice" }));
     expect((await screen.findAllByText(/Felice/)).length).toBeGreaterThan(0);
