@@ -1,14 +1,22 @@
 import { motion } from "framer-motion";
-import { Archive, Calendar, Plus, Sparkles, UserRound } from "lucide-react";
-import { useNav, type Tab } from "../nav";
+import { Archive, BarChart3, Calendar, LayoutGrid, MapPin, Plus, Sparkles, UserRound } from "lucide-react";
+import { useNav, defaultTab, tabsFor, type Tab } from "../nav";
 import { useApp } from "../store";
-import { t } from "../i18n";
+import { t, type TKey } from "../i18n";
 import { cx } from "../util";
 
-const items: Array<{ tab: Tab; icon: typeof Sparkles; key: "feed" | "calendar" | "capsule" | "profile" }> = [
+type Item = { tab: Tab; icon: typeof Sparkles; key: TKey };
+
+const PERSON: Item[] = [
   { tab: "feed", icon: Sparkles, key: "feed" },
   { tab: "calendar", icon: Calendar, key: "calendar" },
   { tab: "capsule", icon: Archive, key: "capsule" },
+  { tab: "profile", icon: UserRound, key: "profile" },
+];
+const ORGANIZER: Item[] = [
+  { tab: "dashboard", icon: LayoutGrid, key: "dashboard" },
+  { tab: "city", icon: MapPin, key: "city" },
+  { tab: "metrics", icon: BarChart3, key: "metrics" },
   { tab: "profile", icon: UserRound, key: "profile" },
 ];
 
@@ -18,10 +26,14 @@ export function TabBar() {
   const openSheet = useNav((s) => s.openSheet);
   const sheet = useNav((s) => s.sheet);
   const lang = useApp((s) => s.lang);
+  const mode = useApp((s) => s.mode);
   const createOpen = sheet?.kind === "create";
 
-  const renderItem = (it: (typeof items)[number]) => {
-    const active = tab === it.tab;
+  const items = mode === "organizer" ? ORGANIZER : PERSON;
+  const activeTab = tabsFor(mode).includes(tab) ? tab : defaultTab(mode);
+
+  const renderItem = (it: Item) => {
+    const active = activeTab === it.tab;
     const Icon = it.icon;
     return (
       <button

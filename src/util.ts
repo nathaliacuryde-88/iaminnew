@@ -1,4 +1,4 @@
-import type { Vibe } from "./types";
+import type { EventT, Vibe } from "./types";
 
 export const cx = (...parts: Array<string | false | null | undefined>) =>
   parts.filter(Boolean).join(" ");
@@ -29,6 +29,32 @@ export function rng(seed: string): () => number {
     t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
+}
+
+/**
+ * Projected attendance forecast for an event:
+ * confirmed RSVPs + conditional pacts ("one friend away") + a slice of maybes,
+ * with a low–high band and a confidence read.
+ */
+export function forecast(e: EventT) {
+  const confirmed = e.going.length;
+  const mb = e.maybe.length;
+  const set = new Set<string>();
+  e.pacts
+    .filter((p) => p.status === "pending")
+    .forEach((p) =>
+      p.between.forEach((u) => {
+        if (!e.going.includes(u) && !e.maybe.includes(u)) set.add(u);
+      })
+    );
+  const pact = set.size;
+  const expMaybe = Math.round(mb * 0.4); // ~40% of maybes show
+  const expPact = Math.round(pact * 0.7); // pacts seal often
+  const projected = confirmed + expMaybe + expPact;
+  const low = confirmed + Math.round(pact * 0.35) + Math.round(mb * 0.2);
+  const high = confirmed + pact + Math.round(mb * 0.6);
+  const conf = clamp(Math.round(((confirmed + expPact) / Math.max(projected, 1)) * 100), 40, 96);
+  return { confirmed, maybe: mb, pact, projected, low, high, conf };
 }
 
 /* ---------------- dates ---------------- */

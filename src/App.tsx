@@ -1,7 +1,7 @@
 import React from "react";
 import { AnimatePresence } from "framer-motion";
 import { useApp } from "./store";
-import { useNav } from "./nav";
+import { useNav, defaultTab, tabsFor } from "./nav";
 import { cx, HOUR } from "./util";
 import { TabBar } from "./components/TabBar";
 import { Toasts } from "./components/Toasts";
@@ -16,7 +16,9 @@ import { SearchScreen } from "./screens/Search";
 import { NotificationsScreen } from "./screens/Notifications";
 import { SettingsScreen } from "./screens/Settings";
 import { PeopleScreen } from "./screens/People";
-import { VenueDashboardScreen } from "./screens/VenueDashboard";
+import { OrganizerDashboardScreen } from "./screens/OrganizerDashboard";
+import { OrganizerCityScreen } from "./screens/OrganizerCity";
+import { MetricsScreen } from "./screens/Metrics";
 import { CreateSheet } from "./screens/Create";
 import { SheetHost } from "./sheets/SheetHost";
 
@@ -25,8 +27,10 @@ export default function App() {
   const theme = useApp((s) => s.theme);
   const seededAt = useApp((s) => s.seededAt);
   const reseed = useApp((s) => s.reseed);
+  const mode = useApp((s) => s.mode);
   const tab = useNav((s) => s.tab);
   const stack = useNav((s) => s.stack);
+  const activeTab = tabsFor(mode).includes(tab) ? tab : defaultTab(mode);
 
   React.useEffect(() => {
     document.documentElement.classList.toggle("light", theme === "light");
@@ -45,18 +49,37 @@ export default function App() {
         ) : (
           <>
             {/* tab pages stay mounted to preserve scroll */}
-            <div className={cx("absolute inset-0", tab !== "feed" && "hidden")}>
-              <FeedScreen />
-            </div>
-            <div className={cx("absolute inset-0", tab !== "calendar" && "hidden")}>
-              <CalendarScreen />
-            </div>
-            <div className={cx("absolute inset-0", tab !== "capsule" && "hidden")}>
-              <CapsuleScreen />
-            </div>
-            <div className={cx("absolute inset-0", tab !== "profile" && "hidden")}>
-              <ProfileScreen />
-            </div>
+            {mode === "organizer" ? (
+              <>
+                <div className={cx("absolute inset-0", activeTab !== "dashboard" && "hidden")}>
+                  <OrganizerDashboardScreen />
+                </div>
+                <div className={cx("absolute inset-0", activeTab !== "city" && "hidden")}>
+                  <OrganizerCityScreen />
+                </div>
+                <div className={cx("absolute inset-0", activeTab !== "metrics" && "hidden")}>
+                  <MetricsScreen />
+                </div>
+                <div className={cx("absolute inset-0", activeTab !== "profile" && "hidden")}>
+                  <ProfileScreen />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className={cx("absolute inset-0", activeTab !== "feed" && "hidden")}>
+                  <FeedScreen />
+                </div>
+                <div className={cx("absolute inset-0", activeTab !== "calendar" && "hidden")}>
+                  <CalendarScreen />
+                </div>
+                <div className={cx("absolute inset-0", activeTab !== "capsule" && "hidden")}>
+                  <CapsuleScreen />
+                </div>
+                <div className={cx("absolute inset-0", activeTab !== "profile" && "hidden")}>
+                  <ProfileScreen />
+                </div>
+              </>
+            )}
 
             <TabBar />
 
@@ -78,8 +101,6 @@ export default function App() {
                     return <SettingsScreen key={s.key} />;
                   case "people":
                     return <PeopleScreen key={s.key} />;
-                  case "venueDashboard":
-                    return <VenueDashboardScreen key={s.key} />;
                   default:
                     return null;
                 }

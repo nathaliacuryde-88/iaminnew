@@ -6,6 +6,9 @@ const dict = {
   calendar: ["Calendar", "Kalender"],
   capsule: ["Capsules", "Kapseln"],
   profile: ["Profile", "Profil"],
+  dashboard: ["Dashboard", "Dashboard"],
+  city: ["City", "Stadt"],
+  metrics: ["Metrics", "Metriken"],
   // feed
   innerCircle: ["Inner Circle", "Inner Circle"],
   cityPulse: ["City Pulse", "City Pulse"],

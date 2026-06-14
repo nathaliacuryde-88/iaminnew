@@ -10,7 +10,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { useApp } from "../store";
-import { useNav } from "../nav";
+import { useNav, defaultTab } from "../nav";
 import { t } from "../i18n";
 import { StackScreen } from "../components/StackScreen";
 import { Field, Row, Seg, Toggle, inputCls, Btn } from "../components/Primitives";
@@ -30,7 +30,7 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
 
 export function SettingsScreen() {
   const s = useApp();
-  const { toast, popAll } = useNav();
+  const { toast, popAll, setTab } = useNav();
   const [confirmDelete, setConfirmDelete] = React.useState(false);
   const [notifPrefs, setNotifPrefs] = React.useState({ pulse: true, door: true, capsule: true });
 
@@ -66,6 +66,7 @@ export function SettingsScreen() {
               value={s.mode}
               onChange={(m) => {
                 s.setMode(m);
+                setTab(defaultTab(m));
                 toast(m === "organizer" ? "🏛️" : "🙋", `Switched to ${m} mode`);
               }}
               options={[

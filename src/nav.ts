@@ -2,7 +2,13 @@ import { create } from "zustand";
 import type { Toast } from "./types";
 import { uid, haptic } from "./util";
 
-export type Tab = "feed" | "calendar" | "capsule" | "profile";
+export type Tab = "feed" | "calendar" | "capsule" | "profile" | "dashboard" | "city" | "metrics";
+
+export const tabsFor = (mode: "person" | "organizer"): Tab[] =>
+  mode === "organizer" ? ["dashboard", "city", "metrics", "profile"] : ["feed", "calendar", "capsule", "profile"];
+
+export const defaultTab = (mode: "person" | "organizer"): Tab =>
+  mode === "organizer" ? "dashboard" : "feed";
 
 export type Screen =
   | { kind: "event"; id: string }
@@ -11,7 +17,6 @@ export type Screen =
   | { kind: "notifications" }
   | { kind: "search" }
   | { kind: "people" }
-  | { kind: "venueDashboard" }
   | { kind: "settings" };
 
 export type SheetT =

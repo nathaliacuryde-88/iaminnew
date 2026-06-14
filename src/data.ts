@@ -171,6 +171,31 @@ export const seedEvents = (): EventT[] => [
     weather: { icon: "⛅", temp: 21, label: "Partly cloudy" },
     sourceType: "screenshot",
   }),
+  // ───────── my hosted club night (organizer showcase) ─────────
+  E({
+    id: "kellernacht",
+    title: "KELLERNACHT vol.6",
+    emoji: "🔊",
+    art: 11,
+    vibe: "club",
+    start: at(3, 22),
+    end: at(4, 4),
+    venue: "Der Keller, Stuttgart Süd",
+    city: "Stuttgart",
+    description:
+      "Our basement night, vol. 6. Lo-fi house downstairs, breaks in the back. Doors 22:00, come early — last time we hit capacity by midnight.",
+    privacy: "public",
+    createdBy: "me",
+    going: ["me", "felice", "mare"],
+    maybe: ["erick", "pippo", "joan", "reduque"],
+    invited: ["felice", "erick", "pippo", "mare", "joan", "reduque", "bernd"],
+    pacts: [
+      { id: "kn1", between: ["bernd", "matti"], status: "pending" },
+      { id: "kn2", between: ["plmnt", "alexw"], status: "pending" },
+    ],
+    weather: { icon: "🌙", temp: 16, label: "Clear night" },
+    views: 318,
+  }),
   E({
     id: "sixeuro",
     title: "6EURONEUNZIG",

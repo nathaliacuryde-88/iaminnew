@@ -31,7 +31,7 @@ import { ME, USERS } from "../data";
 import { useApp, userById } from "../store";
 import { useNav, openPerson } from "../nav";
 import { t } from "../i18n";
-import { clamp, cx, countdown, eur, fmtFull, fmtTime, haptic, HOUR, relDay, VIBES, downloadIcs } from "../util";
+import { cx, countdown, eur, fmtFull, fmtTime, forecast, haptic, HOUR, relDay, VIBES, downloadIcs } from "../util";
 import { StackScreen, IconBtn } from "../components/StackScreen";
 import { Cover } from "../components/Cover";
 import { Avatar, Facepile } from "../components/Avatar";
@@ -962,22 +962,7 @@ function OrganizerModule({ event }: { event: EventT }) {
   const conversion = event.views ? Math.round(((event.going.length + event.maybe.length) / event.views) * 100) : 0;
 
   // ── Projected Fill: confirmed + conditional pacts + maybes, with a band ──
-  const confirmed = event.going.length;
-  const mb = event.maybe.length;
-  const pactPeople = new Set<string>();
-  event.pacts
-    .filter((p) => p.status === "pending")
-    .forEach((p) => p.between.forEach((u) => {
-      if (!event.going.includes(u) && !event.maybe.includes(u)) pactPeople.add(u);
-    }));
-  const pactPending = pactPeople.size;
-
-  const expMaybe = Math.round(mb * 0.4); // ~40% of maybes historically show
-  const expPact = Math.round(pactPending * 0.7); // pacts seal often
-  const projected = confirmed + expMaybe + expPact;
-  const low = confirmed + Math.round(pactPending * 0.35) + Math.round(mb * 0.2);
-  const high = confirmed + pactPending + Math.round(mb * 0.6);
-  const conf = clamp(Math.round(((confirmed + expPact) / Math.max(projected, 1)) * 100), 40, 96);
+  const { confirmed, maybe: mb, pact: pactPending, projected, low, high, conf } = forecast(event);
   const denom = Math.max(confirmed + pactPending + mb, 1); // bar = composition of the pool
 
   return (

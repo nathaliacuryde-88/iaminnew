@@ -98,9 +98,13 @@ describe("I am (IN) smoke", () => {
     expect((await screen.findAllByText(/THE VERDICT/)).length).toBeGreaterThan(0);
     act(() => useNav.getState().closeSheet());
 
-    // organizer tools: projected fill + convert maybes + venue dashboard
+    // organizer mode: mode-aware tab bar + the three organizer screens
     act(() => useApp.getState().setMode("organizer"));
+    act(() => useNav.getState().setTab("dashboard"));
     act(() => useNav.getState().popAll());
+    expect((await screen.findAllByText(/hosting deck/i)).length).toBeGreaterThan(0);
+
+    // projected fill + convert maybes on a hosted event
     act(() => useNav.getState().push({ kind: "event", id: "flohmarkt" }));
     expect((await screen.findAllByText(/Projected fill/i)).length).toBeGreaterThan(0);
     expect((await screen.findAllByText(/one friend away/i)).length).toBeGreaterThan(0);
@@ -108,9 +112,14 @@ describe("I am (IN) smoke", () => {
     act(() => useNav.getState().openSheet({ kind: "convertMaybes", eventId: "flohmarkt" }));
     expect((await screen.findAllByText(/on the fence/i)).length).toBeGreaterThan(0);
     act(() => useNav.getState().closeSheet());
-
     act(() => useNav.getState().popAll());
-    act(() => useNav.getState().push({ kind: "venueDashboard" }));
+
+    // city scouting + metrics intelligence
+    act(() => useNav.getState().setTab("city"));
+    expect((await screen.findAllByText(/Stuttgart/i)).length).toBeGreaterThan(0);
+
+    act(() => useNav.getState().setTab("metrics"));
+    expect((await screen.findAllByText(/track record/i)).length).toBeGreaterThan(0);
     expect((await screen.findAllByText(/super-hosts/i)).length).toBeGreaterThan(0);
     expect((await screen.findAllByText(/Crowd DNA/i)).length).toBeGreaterThan(0);
   });
