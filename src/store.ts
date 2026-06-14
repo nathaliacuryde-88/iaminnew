@@ -83,9 +83,9 @@ const emptyMe: MeProfile = {
   paypal: "",
   revolut: "",
   iban: "",
-  orgName: "",
-  orgInstagram: "",
-  orgWebsite: "",
+  orgName: "Der Keller",
+  orgInstagram: "@derkeller.stgt",
+  orgWebsite: "derkeller.de",
   stripeConnected: false,
 };
 
@@ -288,7 +288,27 @@ export const useApp = create<AppState>()(
         location.reload();
       },
     }),
-    { name: "iamin-store", version: 3 }
+    {
+      name: "iamin-store",
+      version: 4,
+      // v4: organizer revamp — refresh demo events & seed the venue identity,
+      // but keep the user signed in.
+      migrate: (persisted: unknown) => {
+        const s = persisted as Partial<AppState> | undefined;
+        if (!s) return persisted as AppState;
+        s.events = seedEvents();
+        s.notifs = seedNotifs();
+        s.seededAt = Date.now();
+        s.me = {
+          ...emptyMe,
+          ...(s.me ?? {}),
+          orgName: s.me?.orgName || emptyMe.orgName,
+          orgInstagram: s.me?.orgInstagram || emptyMe.orgInstagram,
+          orgWebsite: s.me?.orgWebsite || emptyMe.orgWebsite,
+        };
+        return s as AppState;
+      },
+    }
   )
 );
 
